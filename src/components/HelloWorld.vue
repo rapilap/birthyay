@@ -27,8 +27,7 @@ const loadSlideshow = async () => {
 
   images.value = data.map(
     (file) =>
-      supabase.storage.from("slides").getPublicUrl(`${file.name}`).data
-        .publicUrl // ✅ pakai Slides/
+      supabase.storage.from("slides").getPublicUrl(file.name).data.publicUrl // ✅ pakai Slides/
   );
 
   console.log("LIST DATA:", data);
