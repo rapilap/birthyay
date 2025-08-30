@@ -11,6 +11,7 @@ const audioPlayer = ref(null);
 const router = useRouter();
 const showContent = ref(false);
 const showFooter = ref(false);
+const showbutton = ref(false);
 
 let ucapanInterval = null;
 let slideshowInterval = null;
@@ -142,11 +143,9 @@ onMounted(async () => {
   if (lastAnim) {
     lastAnim.addEventListener("endEvent", () => {
       showMessage.value = true;
+      showbutton.value = true;
     });
   }
-
-  // lock scroll sebelum tombol diklik
-  document.body.style.overflow = "hidden";
 });
 
 onUnmounted(() => {
@@ -424,7 +423,7 @@ onUnmounted(() => {
     </div>
 
     <!-- Bagian Konten setelah klik -->
-    <div v-if="showContent" class="mt-[20rem]">
+    <div v-if="showContent" class="mt-[20rem] md:mt-4">
       <section id="about" class="about">
         <div class="bg-[#F3F2ED] rounded-3xl p-2">
           <h2>Selamat Ulang Tahun🥳🥳</h2>
@@ -466,11 +465,13 @@ onUnmounted(() => {
             v-for="wishes in ucapan"
             :key="wishes.id"
           >
-            <p class="underline">From:</p>
-            {{ wishes.nama }}
+            <div class="w-fit">
+              <p class="underline">From:</p>
+              {{ wishes.nama }}
 
-            <p class="underline">Message:</p>
-            {{ wishes.pesan }}
+              <p class="underline">Message:</p>
+              {{ wishes.pesan }}
+            </div>
           </div>
         </div>
 
