@@ -18,8 +18,8 @@ let slideshowInterval = null;
    =============================== */
 const loadSlideshow = async () => {
   const { data, error } = await supabase.storage
-    .from("slides")
-    .list("", { limit: 100 }); // ✅ folder benar: Slides
+    .from("slideshow")
+    .list("Slides", { limit: 100 }); // ✅ folder benar: Slides
   if (error) {
     console.error("Supabase slideshow error:", error.message);
     return;
@@ -27,7 +27,8 @@ const loadSlideshow = async () => {
 
   images.value = data.map(
     (file) =>
-      supabase.storage.from("slides").getPublicUrl(file.name).data.publicUrl // ✅ pakai Slides/
+      supabase.storage.from("slideshow").getPublicUrl(`Slides/${file.name}`)
+        .data.publicUrl // ✅ pakai Slides/
   );
 
   console.log("LIST DATA:", data);
