@@ -406,6 +406,9 @@ onUnmounted(() => {
     <div class="text-center mb-6">
       <h1 class="mb-3">Happy Birthday Bilap!</h1>
       <p class="name">From: someone who love u the most</p>
+      <p class="mt-3">
+        Desktop site for better experience (Belum responsif😭).
+      </p>
       <div class="mt-6 text-center">
         <a
           href="javascript:void(0)"
@@ -423,7 +426,7 @@ onUnmounted(() => {
     </div>
 
     <!-- Bagian Konten setelah klik -->
-    <div v-if="showContent" class="mt-[20rem] md:mt-4">
+    <div v-if="showContent" class="mt-[20rem]">
       <section id="about" class="about">
         <div class="bg-[#F3F2ED] rounded-3xl p-2">
           <h2>Selamat Ulang Tahun🥳🥳</h2>

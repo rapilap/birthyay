@@ -247,3 +247,7 @@ h1 {
 .ucapanNama {
   font-weight: 700;
 }
+
+button {
+  background: white;
+}

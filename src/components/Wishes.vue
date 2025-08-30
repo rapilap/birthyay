@@ -10,7 +10,9 @@
           placeholder="Tulis ucapan..."
           class="input"
         ></textarea>
-        <button class="bg-white" type="submit">Kirim</button>
+        <button class="bg-white border border-white" type="submit">
+          Kirim
+        </button>
       </form>
 
       <!-- <ul>
