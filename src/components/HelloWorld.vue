@@ -4,36 +4,56 @@ import { supabase } from "../../supabaseClient";
 import { useRouter } from "vue-router";
 
 const ucapan = ref([]);
+const images = ref([]); // slideshow images dari supabase
 const currentIndex = ref(0);
-let intervalId;
 const showMessage = ref(false);
 const audioPlayer = ref(null);
 const router = useRouter();
 
-const images = [
-  "./src/assets/bilap1.jpg",
-  "./src/assets/bilap2.jpg",
-  "./src/assets/bilap3.jpg",
-  "./src/assets/bilap4.jpg",
-  "./src/assets/bilap5.jpg",
-  "./src/assets/bilap7.jpg",
-  "./src/assets/bilap8.jpg",
-  "./src/assets/bilap9.jpg",
-  "./src/assets/bilap10.jpg",
-];
+let ucapanInterval = null;
+let slideshowInterval = null;
 
+/* ===============================
+   Ambil data slideshow dari bucket
+   =============================== */
+const loadSlideshow = async () => {
+  const { data, error } = await supabase.storage
+    .from("slides")
+    .list("", { limit: 100 }); // ✅ folder benar: Slides
+  if (error) {
+    console.error("Supabase slideshow error:", error.message);
+    return;
+  }
+
+  images.value = data.map(
+    (file) =>
+      supabase.storage.from("slides").getPublicUrl(`${file.name}`).data
+        .publicUrl // ✅ pakai Slides/
+  );
+
+  console.log("LIST DATA:", data);
+  console.log("URLS:", images.value);
+};
+
+/* ===============================
+   Ambil data ucapan dari tabel
+   =============================== */
 const loadUcapan = async () => {
   const { data, error } = await supabase
     .from("ucapan")
     .select("*")
     .order("created_at", { ascending: false });
+
   if (error) {
-    console.error("Supabase error:", error.message);
+    console.error("Supabase ucapan error:", error.message);
   } else {
     ucapan.value = data;
   }
 };
 
+/* ===============================
+   Scroll & musik
+   =============================== */
 const playMusicAndScroll = () => {
   audioPlayer.value?.play();
   document.querySelector("#about")?.scrollIntoView({ behavior: "smooth" });
@@ -47,30 +67,9 @@ const goToWishes = () => {
   router.push("/wishes");
 };
 
-onMounted(() => {
-  loadUcapan();
-  intervalId = setInterval(() => {
-    loadUcapan();
-  }, 5000);
-
-  intervalId = setInterval(() => {
-    currentIndex.value = (currentIndex.value + 1) % images.length;
-  }, 3000); // ganti setiap 3 detik
-
-  const lastAnim = document.querySelector("#crema");
-  if (lastAnim) {
-    lastAnim.addEventListener("endEvent", () => {
-      showMessage.value = true;
-    });
-  }
-
-  document.body.style.overflow = "hidden";
-});
-
-onUnmounted(() => {
-  clearInterval(intervalId);
-});
-
+/* ===============================
+   Smooth Scroll Custom
+   =============================== */
 function smoothScrollTo(target, duration = 1000) {
   const element = document.querySelector(target);
   if (!element) return;
@@ -98,6 +97,41 @@ function smoothScrollTo(target, duration = 1000) {
 const scrollToAbout = () => {
   smoothScrollTo("#about", 2000); // 2000ms = 2 detik
 };
+
+/* ===============================
+   Lifecycle Hooks
+   =============================== */
+onMounted(async () => {
+  // load ucapan pertama kali
+  loadUcapan();
+  ucapanInterval = setInterval(loadUcapan, 5000);
+
+  // load slideshow
+  await loadSlideshow();
+
+  // jalanin slideshow tiap 3 detik
+  slideshowInterval = setInterval(() => {
+    if (images.value.length > 0) {
+      currentIndex.value = (currentIndex.value + 1) % images.value.length;
+    }
+  }, 3000);
+
+  // contoh: animasi terakhir (#crema)
+  const lastAnim = document.querySelector("#crema");
+  if (lastAnim) {
+    lastAnim.addEventListener("endEvent", () => {
+      showMessage.value = true;
+    });
+  }
+
+  // lock scroll sebelum tombol diklik
+  document.body.style.overflow = "hidden";
+});
+
+onUnmounted(() => {
+  clearInterval(ucapanInterval);
+  clearInterval(slideshowInterval);
+});
 </script>
 
 <template>
@@ -389,9 +423,10 @@ const scrollToAbout = () => {
             <div class="about-img">
               <transition name="fade" mode="out-in">
                 <img
+                  v-if="images.length"
                   :src="images[currentIndex]"
-                  :key="images[currentIndex]"
                   alt="Slideshow"
+                  class="rounded-2xl transition-opacity duration-700"
                 />
               </transition>
             </div>
