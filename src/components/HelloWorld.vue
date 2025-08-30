@@ -407,7 +407,8 @@ onUnmounted(() => {
       <h1 class="mb-3">Happy Birthday Bilap!</h1>
       <p class="name">From: someone who love u the most</p>
       <p class="mt-3">
-        Desktop site for better experience (Belum responsif😭).
+        Desktop site for better experience (Belum responsif😭 (Laptop lebih
+        bagus sih)).
       </p>
       <div class="mt-6 text-center">
         <a
