@@ -4,37 +4,66 @@ import { supabase } from "../../supabaseClient";
 import { useRouter } from "vue-router";
 
 const ucapan = ref([]);
-const images = ref([]); // slideshow images dari supabase
+const images = ref([]);
 const currentIndex = ref(0);
 const showMessage = ref(false);
 const audioPlayer = ref(null);
 const router = useRouter();
+const showContent = ref(false);
+const showFooter = ref(false);
 
 let ucapanInterval = null;
 let slideshowInterval = null;
 
-/* ===============================
-   Ambil data slideshow dari bucket
-   =============================== */
+// helper preload
+const preloadImages = (urls) => {
+  return Promise.all(
+    urls.map(
+      (url) =>
+        new Promise((resolve) => {
+          const img = new Image();
+          img.src = url;
+          img.onload = () => resolve(url); // resolve kalau sukses
+          img.onerror = () => resolve(url); // tetap resolve walau gagal
+        })
+    )
+  );
+};
+
 const loadSlideshow = async () => {
   const { data, error } = await supabase.storage
     .from("slideshow")
-    .list("Slides", { limit: 100 }); // ✅ folder benar: Slides
+    .list("Slides", { limit: 100 }); // ambil semua file di folder Slides
+
   if (error) {
     console.error("Supabase slideshow error:", error.message);
     return;
   }
 
-  images.value = data.map(
+  // buat URL untuk tiap file
+  const urls = data.map(
     (file) =>
       supabase.storage.from("slideshow").getPublicUrl(`Slides/${file.name}`)
-        .data.publicUrl // ✅ pakai Slides/
+        .data.publicUrl
   );
+  // 🔥 preload semua URL
+  await preloadImages(urls);
 
-  console.log("LIST DATA:", data);
-  console.log("URLS:", images.value);
+  console.log("✅ Semua gambar sudah di-preload");
+  images.value = urls; // baru assign ke state setelah semua ready
 };
 
+const playMusicAndScroll = () => {
+  // kalau kamu ada musik, bisa play di sini
+  audioPlayer.value?.play();
+
+  // baru tampilkan section "about"
+  showContent.value = true;
+  showFooter.value = true;
+
+  // lalu scroll ke bawah dengan halus
+  document.querySelector("#about")?.scrollIntoView({ behavior: "smooth" });
+};
 /* ===============================
    Ambil data ucapan dari tabel
    =============================== */
@@ -49,14 +78,6 @@ const loadUcapan = async () => {
   } else {
     ucapan.value = data;
   }
-};
-
-/* ===============================
-   Scroll & musik
-   =============================== */
-const playMusicAndScroll = () => {
-  audioPlayer.value?.play();
-  document.querySelector("#about")?.scrollIntoView({ behavior: "smooth" });
 };
 
 const enableScroll = () => {
@@ -382,40 +403,28 @@ onUnmounted(() => {
 
     <video ref="audioPlayer" src="../assets/hbd.mp4" loop hidden></video>
 
-    <div
-      v-show="showMessage"
-      class="text-center mb-6 opacity-0 transition-opacity duration-1000"
-      :class="{ 'opacity-100': showMessage }"
-    >
-      <h1>Happy Birthday Bilap!</h1>
+    <!-- Bagian Intro -->
+    <div class="text-center mb-6">
+      <h1 class="mb-3">Happy Birthday Bilap!</h1>
       <p class="name">From: someone who love u the most</p>
+      <div class="mt-6 text-center">
+        <a
+          href="javascript:void(0)"
+          class="bg-white p-2 rounded-lg hover:bg-slate-200 transition duration-700"
+          @click.prevent="
+            () => {
+              playMusicAndScroll();
+              scrollToAbout();
+            }
+          "
+        >
+          Klik 2x untuk lanjut
+        </a>
+      </div>
     </div>
 
-    <div
-      v-show="showMessage"
-      class="mt-6 text-center opacity-0 transition-opacity duration-1000"
-      :class="{ 'opacity-100': showMessage }"
-    >
-      <a
-        class="bg-white p-2 rounded-lg hover:bg-slate-200 transition duration-700"
-        @click.prevent="
-          () => {
-            playMusicAndScroll();
-            scrollToAbout();
-            enableScroll();
-          }
-        "
-      >
-        Klik untuk lanjut
-      </a>
-    </div>
-
-    <!-- <section class="hero" id="home">
-      <main class="content"></main>
-    </section> -->
-
-    <!-- About Section -->
-    <div class="mt-[20rem]">
+    <!-- Bagian Konten setelah klik -->
+    <div v-if="showContent" class="mt-[20rem]">
       <section id="about" class="about">
         <div class="bg-[#F3F2ED] rounded-3xl p-2">
           <h2>Selamat Ulang Tahun🥳🥳</h2>
@@ -447,7 +456,7 @@ onUnmounted(() => {
         </div>
       </section>
 
-      <section id="about" class="about">
+      <section id="wishes" class="about">
         <h2 class="text-white">Look, you've got some wishes</h2>
 
         <!-- Masonry dengan 4 kolom -->
@@ -492,7 +501,10 @@ onUnmounted(() => {
     </div>
   </body>
 
-  <footer class="bg-[#303030] w-full text-center py-2">
+  <footer
+    v-if="showFooter"
+    class="bg-[#303030] w-screen align-bottom h-full text-center py-2 flex justify-center"
+  >
     Made with <span>❤</span> by Apilap
   </footer>
 </template>
